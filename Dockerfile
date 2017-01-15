@@ -56,10 +56,11 @@ RUN pip install -r /strato-requirements.txt --extra-index http://strato-pypi.dc1
 RUN pip install --extra-index http://strato-pypi.dc1:5001 --trusted-host strato-pypi.dc1 dr-client
 RUN pip install --extra-index http://strato-pypi.dc1:5001 --trusted-host strato-pypi.dc1 dr-manager
 COPY build/bring/datalayer_api/strato-datalayer-client-0-1.el7.centos.noarch.rpm /datalayer_client.rpm
-# RUN alien /datalayer_client.rpm
-# RUN dpkg -i /datalayer_client.deb
-# RUN rm -f /datalayer_client.rpm
-# RUN rm -f /datalayer_client.deb
+RUN alien /datalayer_client.rpm
+RUN dpkg -i /datalayer_client.deb strato-datalayer-client_0-2_all.deb
+RUN rm -f /datalayer_client.rpm
+RUN rm -f /strato-datalayer-client_0-2_all.deb
+ENV PYTHONPATH=/usr/share/strato
 
 ENTRYPOINT ["/entrypoint.sh"]
 CMD ["supervisord", "-n", "-c", "/etc/dd-agent/supervisor.conf"]
