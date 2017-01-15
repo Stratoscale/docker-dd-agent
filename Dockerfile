@@ -61,6 +61,9 @@ RUN dpkg -i /strato-datalayer-client_0-2_all.deb
 RUN rm -f /datalayer_client.rpm
 RUN rm -f /strato-datalayer-client_0-2_all.deb
 ENV PYTHONPATH=/usr/share/strato
+COPY symp.py /etc/dd-agent/checks.d/symp.py
+COPY datadog.yaml /etc/dd-agent/conf.d/symp.yaml
+
 
 ENTRYPOINT ["/entrypoint.sh"]
 CMD ["supervisord", "-n", "-c", "/etc/dd-agent/supervisor.conf"]
