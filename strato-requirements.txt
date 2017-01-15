@@ -1,0 +1,13 @@
+harbour_client==707123f
+hammock-rest==f3107e1
+strato_kv==84a4458
+strato-common==5727369
+stratoconsts==f59ea7c
+symphony-client==df361cf
+melet-api-client==cb16ade0b6c633e34504b68322ccc772afaa0b65
+stargate==6f050f069985e63e998e7046d2ac2b91116bb907
+stratonet-frontend-client==0e2a83dfbc8a7e1a970b8fc024a580722c2bf9c3
+datalayer_events==7eaee860e314634eba40a5033b9c343ed7cb05f4
+nodedapi_client==56f983a16bf85dced8d3f886e96d0187e68a21b0
+policy_store_client==be9dc96
+sagittarius==d8be01d81814ef3b9ef8051e88a7a8ffb14e6164

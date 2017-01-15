@@ -1,6 +1,15 @@
 FROM debian:jessie
+COPY client.egg /client.egg
+COPY install-client.sh /install-client.sh
 
 MAINTAINER Datadog <package@datadoghq.com>
+
+ENV DEBIAN_FRONTEND noninteractive
+RUN apt-get update && \
+    apt-get -y install gcc mono-mcs && \
+    apt-get -y install alien dpkg-dev debhelper build-essential && \
+    rm -rf /var/lib/apt/lists/*
+
 
 ENV DOCKER_DD_AGENT=yes \
     AGENT_VERSION=1:5.10.1-1
@@ -39,11 +48,20 @@ VOLUME ["/conf.d", "/checks.d"]
 # Expose DogStatsD and supervisord ports
 EXPOSE 8125/udp 9001/tcp
 
-# Healthcheck
-HEALTHCHECK --interval=5m --timeout=3s --retries=1 \
-  CMD test $(/opt/datadog-agent/embedded/bin/python /opt/datadog-agent/bin/supervisorctl \
-      -c /etc/dd-agent/supervisor.conf status | awk '{print $2}' | egrep -v 'RUNNING|EXITED' | wc -l) \
-      -eq 0 || exit 1
+COPY requirements.txt /requirements.txt
+COPY strato-requirements.txt /strato-requirements.txt
+ENV PATH="/opt/datadog-agent/embedded/bin:$PATH"
+RUN pip install --upgrade pip
+RUN pip install pbr
+RUN pip install -r /requirements.txt --extra-index http://strato-pypi.dc1:5001 --trusted-host strato-pypi.dc1
+RUN pip install -r /strato-requirements.txt --extra-index http://strato-pypi.dc1:5001 --trusted-host strato-pypi.dc1
+RUN pip install --extra-index http://strato-pypi.dc1:5001 --trusted-host strato-pypi.dc1 dr-client
+RUN pip install --extra-index http://strato-pypi.dc1:5001 --trusted-host strato-pypi.dc1 dr-manager
+COPY build/bring/datalayer_api/strato-datalayer-client-0-1.el7.centos.noarch.rpm /datalayer_client.rpm
+RUN alien /datalayer_client.rpm
+RUN dpkg -i /datalayer_client.deb
+RUN rm -f /datalayer_client.rpm
+RUN rm -f /datalayer_client.deb
 
 ENTRYPOINT ["/entrypoint.sh"]
 CMD ["supervisord", "-n", "-c", "/etc/dd-agent/supervisor.conf"]
