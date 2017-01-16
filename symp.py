@@ -24,6 +24,7 @@ class SympCheck(AgentCheck):
         self.report_rds_instances(client, cluster_name)
         self.report_app_instances(client, cluster_name)
         self.report_cluster_services(client, cluster_name)
+        self.report_disks(client, cluster_name)
 
     def report_vms(self, client, cluster_name):
         vms = client.northbound.vms.list()
@@ -97,3 +98,18 @@ class SympCheck(AgentCheck):
                     active += 1
         self.gauge('cluster.cm.services.active', active, device_name=cluster_name)
         self.gauge('cluster.cm.services.failed', failed, device_name=cluster_name)
+    
+    def report_disks(self, client, cluster_name):
+        disks = client.melet.disks.list()
+        disks_num = len(disks)
+        healthy_count = 0
+        in_use_count = 0
+        for disk in disks:
+            if disk.health == 'healthy':
+                healthy_count += 1
+            if disk.state == 'in-use':
+                in_use_count += 1
+ 
+        self.gauge('cluster.disks.number', disks_num, device_name=cluster_name)               
+        self.gauge('cluster.disks.healthy', healthy_count, device_name=cluster_name)
+        self.gauge('cluslter.disks.in_use', in_use_count, device_name=cluster_name)
