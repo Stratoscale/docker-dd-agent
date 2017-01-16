@@ -20,6 +20,9 @@ class SympCheck(AgentCheck):
         self.report_cluster_memory(client, cluster_name)
         self.report_cluster_cpu(client, cluster_name)
         self.report_cluster_storage(client, cluster_name)
+        self.report_k8s_clusters(client, cluster_name)
+        self.report_rds_instances(client, cluster_name)
+        self.report_app_instances(client, cluster_name)
 
     def report_vms(self, client, cluster_name):
         vms = client.northbound.vms.list()
@@ -33,7 +36,6 @@ class SympCheck(AgentCheck):
         self.gauge('cluster.nodes.maintenance', '%d' % len([node for node in nodes if node['state'] == 'in_maintenance']), device_name=cluster_name)
         self.gauge('cluster.nodes.failed', '%d' % len([node for node in nodes if node['state'] == 'failed']), device_name=cluster_name)
 
-        
     def report_cluster_storage(self, client, cluster_name):
         pools = client.melet.pools.list()
         raw_allocated = raw_capacity = effective_allocated = 0
@@ -44,8 +46,6 @@ class SympCheck(AgentCheck):
         self.gauge('cluster.storage.raw_allocated', raw_allocated, device_name=cluster_name)
         self.gauge('cluster.storage.raw_capacity', raw_capacity, device_name=cluster_name)
         self.gauge('cluster.storage.effective_allocated', effective_allocated, device_name=cluster_name)
-        
-        
         
     def report_cluster_memory(self, client, cluster_name):
         mem_raw_capacity = _sumBy(client.metric.query_top('memory__provisioned__of__node__in__MB'))
@@ -74,3 +74,12 @@ class SympCheck(AgentCheck):
         self.gauge('cluster.cpu.capacity', cpu_count, device_name=cluster_name)
         self.gauge('cluster.cpu.effective_allocated', cpu_effective_allocated, device_name=cluster_name)
         self.gauge('cluster.cpu.ratio', cpu_ratio, device_name=cluster_name)
+
+    def report_k8s_clusters(self, client, cluster_name):
+        self.gauge('cluster.services.k8s', '%d' % len(client.kubernetes.clusters.list()), device_name=cluster_name)
+
+    def report_rds_instances(self, client, cluster_name):
+        self.gauge('cluster.services.rds', '%d' % len(client.databases.instances.list()), device_name=cluster_name)
+
+    def report_app_instances(self, client, cluster_name):
+        self.gauge('cluster.services.apps', '%d' % len(client.apps.instances.list()), device_name=cluster_name)
