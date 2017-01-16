@@ -23,6 +23,7 @@ class SympCheck(AgentCheck):
         self.report_k8s_clusters(client, cluster_name)
         self.report_rds_instances(client, cluster_name)
         self.report_app_instances(client, cluster_name)
+        self.report_cluster_services(client, cluster_name)
 
     def report_vms(self, client, cluster_name):
         vms = client.northbound.vms.list()
@@ -59,7 +60,7 @@ class SympCheck(AgentCheck):
         self.gauge('cluster.memory.raw_used', mem_raw_used, device_name=cluster_name)
         self.gauge('cluster.memory.effective_provisioned', mem_effective_provisioned, device_name=cluster_name)
         self.gauge('cluster.memory.ratio_vms', memory_ratio_vms, device_name=cluster_name)
-    
+
 
     def report_cluster_cpu(self, client, cluster_name):
         cpu_count = _sumBy(client.metric.query_top('cpu__count__of__node__in__integer'))
@@ -83,3 +84,16 @@ class SympCheck(AgentCheck):
 
     def report_app_instances(self, client, cluster_name):
         self.gauge('cluster.services.apps', '%d' % len(client.apps.instances.list()), device_name=cluster_name)
+
+    def report_cluster_services(self, client, cluster_name):
+        failed = 0
+        active = 0
+        groups = client.nodedapi_cluster.services()
+        for services in groups.values():
+            for service, nodes_with_statuses in services.iteritems():
+                if any(not status for host, status in nodes_with_statuses.iteritems()):
+                    failed += 1
+                else:
+                    active += 1
+        self.gauge('cluster.cm.services.active', active, device_name=cluster_name)
+        self.gauge('cluster.cm.services.failed', failed, device_name=cluster_name)
