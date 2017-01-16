@@ -25,6 +25,7 @@ class SympCheck(AgentCheck):
         self.report_app_instances(client, cluster_name)
         self.report_cluster_services(client, cluster_name)
         self.report_disks(client, cluster_name)
+        self.report_physical_networks(client, cluster_name)
 
     def report_vms(self, client, cluster_name):
         vms = client.northbound.vms.list()
@@ -110,6 +111,11 @@ class SympCheck(AgentCheck):
             if disk.state == 'in-use':
                 in_use_count += 1
  
-        self.gauge('cluster.disks.number', disks_num, device_name=cluster_name)               
+        self.gauge('cluster.disks.number', disks_num, device_name=cluster_name)
         self.gauge('cluster.disks.healthy', healthy_count, device_name=cluster_name)
         self.gauge('cluslter.disks.in_use', in_use_count, device_name=cluster_name)
+
+    def report_physical_networks(self, client, cluster_name):
+        ifs = client.networking.ethernet_ifs.list()
+        self.gauge('cluster.network.ifs_phys.active', '%d' % len([f for f in ifs if f['oper_state'] == 'up']), device_name=cluster_name)
+        self.gauge('cluster.network.ifs_phys.inactive', '%d' % len([f for f in ifs if f['oper_state'] != 'up']), device_name=cluster_name)
