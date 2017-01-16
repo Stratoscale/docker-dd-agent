@@ -102,18 +102,13 @@ class SympCheck(AgentCheck):
     
     def report_disks(self, client, cluster_name):
         disks = client.melet.disks.list()
-        disks_num = len(disks)
-        healthy_count = 0
-        in_use_count = 0
-        for disk in disks:
-            if disk.health == 'healthy':
-                healthy_count += 1
-            if disk.state == 'in-use':
-                in_use_count += 1
  
-        self.gauge('cluster.disks.number', disks_num, device_name=cluster_name)
-        self.gauge('cluster.disks.healthy', healthy_count, device_name=cluster_name)
-        self.gauge('cluslter.disks.in_use', in_use_count, device_name=cluster_name)
+        self.gauge('cluster.disks.number', len(disks), device_name=cluster_name)
+        self.gauge('cluster.disks.healthy', '%d' % len([disk for disk in disks if disk['health'] == 'healthy']), device_name=cluster_name)
+        self.gauge('cluster.disks.non_healthy', '%d' % len([disk for disk in disks if disk['health'] != 'healthy']), device_name=cluster_name)
+        self.gauge('cluslter.disks.in_use', len([disk for disk in disks if disk['state'] == 'in-use']), device_name=cluster_name)
+        self.gauge('cluster.disks.synced', '%d' % len([disk for disk in disks if disk['sync_state'] == 'synced']), device_name=cluster_name)
+        self.gauge('cluster.disks.unsynced', '%d' % len([disk for disk in disks if disk['sync_state'] not in ('synced', None)] ), device_name=cluster_name)
 
     def report_physical_networks(self, client, cluster_name):
         ifs = client.networking.ethernet_ifs.list()
